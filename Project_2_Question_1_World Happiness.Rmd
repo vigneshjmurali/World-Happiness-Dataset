@@ -1,0 +1,287 @@
+---
+title: "EXPLORING WORLD HAPPINESS OF YEARS 2015,2016,2017"
+author: "Vignesh J Muralidharan"
+date: "September 29, 2018"
+output:
+  word_document: default
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dendroextras); library(dendextend) ; library(cluster)
+library(tidyverse) ; library(circlize) ; library(mclust)
+library(factoextra) ; library(MVA) ; library(NbClust) ; library(seriation)
+library(arulesCBA); library(arulesViz)
+```
+
+#**FOR DATASET HAPPY 2015**
+
+```{r}
+happy2015=read.csv("https://raw.githubusercontent.com/vigneshjmurali/Statistical-Predictive-Modelling/master/Datasets/World_Happiness_2015.csv")
+dim(happy2015)
+# TAKING OUT HAPPINESS INFORMATION FROM THE GIVEN DATASET FOR THE CLUSTERING ANALYSIS
+row.names(happy2015)<-happy2015$Country
+happy2015cut<-happy2015[,6:12]
+happy2015cut.s=scale(happy2015cut)
+happy2015cut.d=dist(happy2015cut.s)
+happy2015cut.hc.s=hclust(happy2015cut.d,method="ward.D")
+happy2015cutdend=as.dendrogram(happy2015cut.hc.s)
+labels_colors(happy2015cutdend)<-as.numeric(as.factor(happy2015$Region[happy2015cut.hc.s$order]))
+dend=as.dendrogram(happy2015cut.hc.s)
+plot(happy2015cutdend)
+par(mar = rep(0,4))
+dend=as.dendrogram(happy2015cut.hc.s)
+circlize_dendrogram(dend)
+```
+
+#**PARTITION CLUSTERING HAPPY 2015**
+
+```{r}
+set.seed(123)
+fviz_nbclust(happy2015cut.s,kmeans,method="silhouette")
+fviz_nbclust(happy2015cut.s,kmeans,method="gap_stat")
+fviz_nbclust(happy2015cut.s,kmeans,method="wss")
+happy15.nbclust<-happy2015cut %>% #Using NbClust 
+  scale() %>% NbClust(distance="euclidean",min.nc=2,max.nc=8,method="complete",index="all")
+happy2015cut.k2sil<-kmeans(happy2015cut.s,centers=2,iter.max=100,nstart=25)
+happy2015cut.k4gap<-kmeans(happy2015cut.s,centers=4,iter.max=100,nstart=25)
+fviz_cluster(happy2015cut.k2sil,data=happy2015cut.s,ellipse.type="convex",palette="jco",repel=TRUE,ggtheme=theme_minimal())
+fviz_cluster(happy2015cut.k4gap,data=happy2015cut.s,ellipse.type="convex",palette="jco",repel=TRUE,ggtheme=theme_minimal())
+```
+
+this clustering clearly show that most of the african countries and some of the asian countries are clustered in the yellow and most of the europe countries are clustered in the black.
+#**M-CLUST**
+
+```{r}
+happy2015cut.mclust<-Mclust(happy2015cut.s)
+summary(happy2015cut.mclust)
+fviz_mclust(happy2015cut.mclust,"BIC",palette="jco") 
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5096736/
+```
+
+#**FOR DATASET HAPPY 2016**
+
+```{r}
+happy2016=read.csv("https://raw.githubusercontent.com/vigneshjmurali/Statistical-Predictive-Modelling/master/Datasets/World_Happiness_2016.csv")
+dim(happy2016)
+# TAKING OUT HAPPINESS INFORMATION FROM THE GIVEN DATASET FOR THE CLUSTERING ANALYSIS
+row.names(happy2016)<-happy2016$Country
+happy2016cut<-happy2016[,7:13]
+happy2016cut.s=scale(happy2016cut)
+happy2016cut.d=dist(happy2016cut.s)
+happy2016cut.hc.s=hclust(happy2016cut.d,method="ward.D")
+happy2016cutdend=as.dendrogram(happy2016cut.hc.s)
+labels_colors(happy2016cutdend)<-as.numeric(as.factor(happy2016$Region[happy2016cut.hc.s$order]))
+dend16=as.dendrogram(happy2016cut.hc.s)
+plot(happy2016cutdend)
+par(mar = rep(0,4))
+dend16=as.dendrogram(happy2016cut.hc.s)
+circlize_dendrogram(dend16)
+```
+
+#**PARTITION CLUSTERING HAPPY 2016**
+```{r}
+set.seed(123)
+fviz_nbclust(happy2016cut.s,kmeans,method="silhouette")
+fviz_nbclust(happy2016cut.s,kmeans,method="gap_stat")
+fviz_nbclust(happy2016cut.s,kmeans,method="wss")
+happy16.nbclust<-happy2016cut %>% #Using NbClust 
+  scale() %>% NbClust(distance="euclidean",min.nc=2,max.nc=8,method="complete",index="all")
+happy2016cut.k2<-kmeans(happy2016cut.s,centers=2,iter.max=100,nstart=25)
+happy2016cut.k4<-kmeans(happy2016cut.s,centers=4,iter.max=100,nstart=25)
+#pairs(happy2016cut[-1],pch=happy2016cut.k2$cluster,col=unclass(happy2016cut[,1]))
+fviz_cluster(happy2016cut.k2,data=happy2016cut.s,ellipse.type="convex",palette="jco",repel=TRUE,ggtheme=theme_minimal())
+fviz_cluster(happy2016cut.k4,data=happy2016cut.s,ellipse.type="convex",palette="jco",repel=TRUE,ggtheme=theme_minimal())
+```
+
+#**M-CLUST**
+
+```{r}
+happy2016cut.mclust<-Mclust(happy2016cut.s)
+summary(happy2016cut.mclust)
+fviz_mclust(happy2016cut.mclust,"BIC",palette="jco") 
+```
+
+#**FOR DATASET HAPPY 2017**
+
+```{r}
+happy2017=read.csv("https://raw.githubusercontent.com/vigneshjmurali/Statistical-Predictive-Modelling/master/Datasets/World_Happiness_2017.csv")
+dim(happy2017)
+# TAKING OUT HAPPINESS INFORMATION FROM THE GIVEN DATASET FOR THE CLUSTERING ANALYSIS
+row.names(happy2017)<-happy2017$Country
+happy2017cut<-happy2017[,6:12]
+happy2017cut.s=scale(happy2017cut)
+happy2017cut.d=dist(happy2017cut.s)
+happy2017cut.hc.s=hclust(happy2017cut.d,method="ward.D")
+happy2017cutdend=as.dendrogram(happy2017cut.hc.s)
+labels_colors(happy2017cutdend)<-as.numeric(as.factor(happy2017$Region[happy2017cut.hc.s$order]))
+dend17=as.dendrogram(happy2017cut.hc.s)
+plot(happy2016cutdend)
+```
+
+#**PARTITION CLUSTERING HAPPY 2017**
+
+```{r}
+set.seed(123)
+fviz_nbclust(happy2017cut.s,kmeans,method="silhouette")
+fviz_nbclust(happy2017cut.s,kmeans,method="gap_stat")
+fviz_nbclust(happy2017cut.s,kmeans,method="wss")
+happy17.nbclust<-happy2017cut %>% #Using NbClust 
+  scale() %>% NbClust(distance="euclidean",min.nc=2,max.nc=8,method="complete",index="all")
+happy2017cut.k2sil<-kmeans(happy2017cut.s,centers=3,iter.max=100,nstart=25)
+happy2017cut.k4gap<-kmeans(happy2017cut.s,centers=3,iter.max=100,nstart=25)
+#pairs(happy2017cut[-1],pch=happy2017cut.k2sil$cluster,col=unclass(happy2017cut[,1]))
+fviz_cluster(happy2017cut.k2sil,data=happy2017cut.s,ellipse.type="convex",palette="jco",repel=TRUE,ggtheme=theme_minimal())
+fviz_cluster(happy2017cut.k4gap,data=happy2017cut.s,ellipse.type="convex",palette="jco",repel=TRUE,ggtheme=theme_minimal())
+```
+
+#**M-CLUST**
+
+```{r}
+happy2017cut.mclust<-Mclust(happy2017cut.s)
+summary(happy2017cut.mclust)
+fviz_mclust(happy2017cut.mclust,"BIC",palette="jco") 
+```
+
+```{r}
+Cluster_Method<-c('Sulhouette','Gap-Stat','WSS','NBClust', ' MClust')
+Happy_2015<-c(2,4,2,5,4)
+Happy_2016<-c(4,2,4,4,5)
+Happy_2017<-c(3,3,3,2,4)
+results<-data.frame(Cluster_Method,Happy_2015,Happy_2016,Happy_2017) ; results
+```
+
+#**SERIATION ANALYSIS**
+
+```{r}
+set.seed(34)
+x2015<-as.matrix(happy2015cut)
+x20151<-x2015[sample(seq_len(nrow(x2015))),]
+d2015<-dist(x20151)
+o2015<-seriate(d2015,method="OLO")
+pimage(d2015,main="Original")
+pimage(d2015,o2015,main="ordered")
+get_order(o2015)
+
+data("happy2016cut")
+x2016<-as.matrix(happy2016cut)
+x2016<-x2016[sample(seq_len(nrow(x2016))),]
+d2016<-dist(x2016)
+o2016<-seriate(d2016,method="OLO")
+pimage(d2016,main="Original")
+pimage(d2016,o2016,main="ordered")
+get_order(o2016)
+
+data("happy2017cut")
+x2017<-as.matrix(happy2017cut)
+x2017<-x2017[sample(seq_len(nrow(x2017))),]
+d2017<-dist(x2017)
+o2017<-seriate(d2017,method="OLO")
+pimage(d2017,main="Original")
+pimage(d2017,o2017,main="ordered")
+get_order(o2017)
+```
+
+The Seriation analysis is used to compare the generated order of the happiness without the happiness score. when the order shows for every year the order gets changed each time the seriation is used to run and different order gets generated each time even though i set the seed it happens. I am not sure if that is the correct way to analyse the order based on the seriation to see the best happiness of the country. For example in 2015 once it shows kenya second time it runs it gives Nepal so I am not sure if this order makes good sence in this point of dataset. 
+
+```{r}
+#ASSOCIATION FOR THE 2015
+library(arulesCBA); library(arulesViz) 
+set.seed(1234) 
+train_test_split=sample(1:2,dim(happy2015cut)[1],repl=T) 
+idx1<-train_test_split 
+train.happy15<-happy2015cut[idx1==1,] #training set 
+test.happy15<-happy2015cut[idx1==2,] #testing set 
+train.happy15[,names(train.happy15)] <- lapply(train.happy15[,names(train.happy15)] , factor) 
+train.happy15 <- as(train.happy15, "transactions")
+test.happy15[,names(test.happy15)] <- lapply(test.happy15[,names(test.happy15)] , factor) 
+test.happy15 <- as(test.happy15, "transactions")
+rules1 <- apriori(data = train.happy15 , parameter = list( supp = 0.001 , conf = 0.9))
+rules1<-sort(rules1 , decreasing = TRUE , by = 'lift')
+inspect(rules1[1:20])
+plot(rules1, measure=c("support", "lift"), shading="confidence")
+head(quality(rules1))
+
+#ASSOCIATION FOR THE 2016
+library(arulesCBA); library(arulesViz) 
+set.seed(1234) 
+train_test_split=sample(1:2,dim(happy2016cut)[1],repl=T) 
+idx1<-train_test_split 
+train.happy16<-happy2016cut[idx1==1,] #training set 
+test.happy16<-happy2016cut[idx1==2,] #testing set 
+train.happy16[,names(train.happy16)] <- lapply(train.happy16[,names(train.happy16)] , factor) 
+train.happy16 <- as(train.happy16, "transactions")
+test.happy16[,names(test.happy16)] <- lapply(test.happy16[,names(test.happy16)] , factor) 
+test.happy16 <- as(test.happy16, "transactions")
+rules2 <- apriori(data = train.happy16 , parameter = list( supp = 0.001 , conf = 0.9))
+rules2<-sort(rules2 , decreasing = TRUE , by = 'lift')
+inspect(rules2[1:20])
+plot(rules2, measure=c("support", "lift"), shading="confidence")
+head(quality(rules2))
+
+#ASSOCIATION FOR THE 2017
+library(arulesCBA); library(arulesViz) 
+set.seed(1234) 
+train_test_split=sample(1:2,dim(happy2017cut)[1],repl=T) 
+idx1<-train_test_split 
+train.happy17<-happy2017cut[idx1==1,] #training set 
+test.happy17<-happy2017cut[idx1==2,] #testing set 
+train.happy17[,names(train.happy17)] <- lapply(train.happy17[,names(train.happy17)] , factor) 
+train.happy17 <- as(train.happy17, "transactions")
+test.happy17[,names(test.happy17)] <- lapply(test.happy17[,names(test.happy17)] , factor) 
+test.happy17 <- as(test.happy17, "transactions")
+rules3 <- apriori(data = train.happy17 , parameter = list( supp = 0.001 , conf = 0.9))
+rules3<-sort(rules3 , decreasing = TRUE , by = 'lift')
+inspect(rules3[1:20])
+plot(rules3, measure=c("support", "lift"), shading="confidence")
+head(quality(rules3))
+```
+
+1). Norway tops the global happiness rankings :
+
+Based on the analysis of cluster or other association analysis we cant say that norway is topping the list. But when we see the cluster we can see that it does rank among one of the few top countries but clearly cannot be said in that way.
+
+2. All top ten countries rank highly on all the main features found to support happiness
+
+I really feel the countries are grouped based on there scores in each variable in that case if we just compare with the cluster analysis in the year 2015 the cluster of some countries which we can understand makes really as a close cluster and form a group according to the score . I could really belive the cluster how it has formed itself for each year. But, on the basis of seriation analysis I couldnt see the rankings based on the main features.
+
+3) Happiness is both social and personal
+
+I couldnt see any variable with this but, sensiblly seeing since the dataset is based on the happiness this should be related with social and personal for example "Dystopia" variable really explains the community or society that is undesirable or frightening sot this becomes a social issue in the happiness ranking while the family or freedom really comes with personal issues. So these variables in the dataset really helps in finding both social and personal of the citizens to figure out how the happiness is ranked in the world for each country. 
+
+4) Unemployment causes a major fall in happiness, and even for those in work the quality of work can cause major variations in happiness
+
+Though we dont have any variable which says unemployment, some variables like Trust Government corruption or the Economic GDP and even genoricity will really helps us to explain few issues in each country happening regarding the job oppurtunities. For example if the countrys government is corrupted then unemployment will be a real factor and also economic growth is also a problem.
+
+5) China are no happier than most countries, though richer and longer longevity
+
+Based on all the cluster analysis and the seriation i feel china is in the middle which supports both the richer and the poor which makes the country having no happier 
+
+6) Much of Africa is struggling
+
+In the hirachial clustering the african countries are listed in one color and also in other clustering it has no other combinations with other parts of the countries which stands appart. but based on the seriation analysis we cant really say that. When seeing the data with known facts our clustering methods makes real sence and helps us to say which country might group with what. So on that basis as a human being i feel african countries are little struggling.
+
+7) Happiness has fallen in America
+
+I think that doesnt really feel in my analysis. Because when i see the united states in 2015 clusteing is stays in the same group where other european countries are available and until 2017 it stays with same group in this case i cant say that happiness has fallen. But if i could do the correct seriation analysis then I may be able to answer this.
+
+#**ASSOCIATION RULES**
+
+```{r}
+h2015<-discretizeDF(happy2015cut)
+rules<-apriori(h2015)
+summary(rules)
+subrules<-rules[quality(rules)$confidence>0.8]
+subrules
+plot(subrules,method="matrix",measure = "lift")
+subrules2<-head(sort(rules,by="lift"),10)
+plot(subrules2,method = "graph")
+plot(subrules2, method="paracoord")
+#plot(subrules2, method = "grouped matrix", engine = "interactive")
+```
